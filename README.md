@@ -1,6 +1,6 @@
 # Bubble Cloud Launcher（Beta）
 
-##设备
+## 设备
 inmo air
 
 ## 功能
