@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.motion.widget.MotionLayout
+    android:id="@+id/mlrootlayout"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="600dp"
+    android:layout_height="400dp"
+    android:background="@color/black"
+    tools:ignore="MissingClass,MotionLayoutInvalidSceneFileReference">
+
+    <ImageView
+        android:id="@+id/bg"
+        android:layout_width="456dp"
+        android:layout_height="282dp"
+        android:background="@mipmap/bg_dialog"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+    <RelativeLayout
+        android:id="@+id/dw_rl"
+        android:orientation="vertical"
+        android:layout_marginTop="59dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="456dp"
+        android:layout_height="180dp">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:id="@+id/dw_ll"
+            android:layout_centerInParent="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/ivAppIcon"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginBottom="20dp"
+                android:layout_gravity="center_horizontal"
+                app:layout_constraintEnd_toEndOf="@+id/bg"
+                app:layout_constraintStart_toStartOf="@+id/bg"
+                app:layout_constraintTop_toTopOf="@+id/bg"
+                android:visibility="gone"/>
+
+
+            <TextView
+                android:id="@+id/tv_content"
+                android:textSize="24sp"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:alpha="0.7"
+                android:text="SwipeForward to cancel and swipebackward to confirm"
+                android:layout_gravity="center_horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_begin="120dp" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_end="120dp" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_begin="300dp" />
+
+    <TextView
+        android:id="@+id/tvCancel"
+        android:layout_width="0dp"
+        android:layout_height="62dp"
+        android:layout_marginBottom="41dp"
+        android:background="@drawable/shape_left_default_bg"
+        android:gravity="center"
+        android:text="Cancel"
+        android:textColor="@color/white"
+        android:textSize="22dp"
+        android:singleLine="true"
+        android:maxHeight="62dp"
+        android:minHeight="62dp"
+        app:layout_constraintBottom_toBottomOf="@+id/bg"
+        app:layout_constraintEnd_toStartOf="@+id/guideline6"
+        app:layout_constraintStart_toStartOf="@+id/guideline4" />
+
+    <TextView
+        android:id="@+id/tvConfirm"
+        android:layout_width="0dp"
+        android:layout_height="62dp"
+        android:layout_marginBottom="41dp"
+        android:background="@drawable/shape_right_selected_bg"
+        android:gravity="center"
+        android:text="Confirm"
+        android:textColor="@color/white"
+        android:textSize="22dp"
+        android:singleLine="true"
+        android:maxHeight="62dp"
+        android:minHeight="62dp"
+        app:layout_constraintBottom_toBottomOf="@+id/bg"
+        app:layout_constraintEnd_toEndOf="@+id/guideline5"
+        app:layout_constraintStart_toEndOf="@+id/guideline6" />
+
+
+</androidx.constraintlayout.motion.widget.MotionLayout>

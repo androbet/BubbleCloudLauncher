@@ -1,1 +1,1 @@
-include ':app', ':bubblecloud', ':circularimageview'
+include ':app', 'circularimageview'
