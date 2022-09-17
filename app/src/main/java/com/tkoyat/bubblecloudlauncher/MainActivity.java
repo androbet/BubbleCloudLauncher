@@ -41,7 +41,7 @@ public class MainActivity extends Activity {
     BubbleRecyclerViewAdapter appListAdapter;
     List<AppDetail> apps;
     SharedPreferences.Editor editor;
-    HomeKeyEventReceiver homeKeyEventReceiver;
+//    HomeKeyEventReceiver homeKeyEventReceiver;
     boolean isOpened;
     DrawerLayout layout;
     private PackageManager manager;
@@ -53,15 +53,24 @@ public class MainActivity extends Activity {
     int scale = 0;
     int focused = 0;
 
+    // 缩放
+    private static final int MAX_SCALE = 150;
+    private static final int MIN_SCALE = -15;
+
     // gyroscope sensor object
-    private static final float M_COMPARE_VALUE = 0.05f;
+    private static final float M_COMPARE_VALUE = 2.0f;
+    private static final float MIN_ANGLE = 2.0f;
+    private static final float MAX_ANGLE = 30.0f;
 
     private SensorManager gyroscopeSensormanager = null;
     private Sensor gyroscopeSensor = null;
     private SensorEventListener gyroscopeSensorListener = null;
 
     private final float[] data_last = {0, 0, 0};
-    private final float[] data_current = {0, 0, 0};
+    private final float[] data_current = {0, 0, 0};  // 记录偏移值xyz
+
+    private int h_offset = 0;
+    private int v_offset = 0;
 
     private boolean onetime = true;
 
@@ -79,32 +88,33 @@ public class MainActivity extends Activity {
 
     private boolean gSensorCheck(float data) {
         return Math.abs(data) > M_COMPARE_VALUE;
+//        return MIN_ANGLE < Math.abs(data) && Math.abs(data) < MAX_ANGLE;
     }
 
     private void initSensor() {
         gyroscopeSensormanager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
-        gyroscopeSensor = gyroscopeSensormanager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        gyroscopeSensor = gyroscopeSensormanager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
         gyroscopeSensorListener = new SensorEventListener() {
             public void onAccuracyChanged(Sensor s, int accuracy) {
             }
 
             public void onSensorChanged(SensorEvent event) {
-                float x = event.values[0];
-                float y = event.values[1];
-                float z = event.values[2];
-                data_current[0] = x;
-                data_current[1] = y;
-                data_current[2] = z;
-                if (onetime && (x != 0) && (y != 0) && (z != 0)) {
-                    onetime = false;
-                    data_last[0] = x;
-                    data_last[1] = y;
-                    data_last[2] = z;
-                }
-                if (gSensorCheck(data_current[0]) || gSensorCheck(data_current[1]) || gSensorCheck(data_current[1])) {
-                    if ((data_current[0] != data_last[0]) || (data_current[1] != data_last[1]) || (data_current[2] != data_last[2])) {
-                        recyclerView.smoothScrollBy((int) -y * 400, (int) -x * 200);
-                        Log.d(TAG, "mmi test values: x " + x + "," + y + "," + z);
+                data_current[2] = event.values[2];  // x
+                data_current[1] = event.values[1];  // y
+
+                if (Math.abs(data_current[2]) < 30 && Math.abs(data_current[1]) < 30) {
+                    if (gSensorCheck(Math.abs(data_current[2] - data_last[2])) || gSensorCheck(Math.abs(data_current[1] - data_last[1]))) {
+                        float x_move = (data_current[2] - data_last[2]) * 10;
+                        float y_move = (data_current[1] - data_last[1]) * 10;
+                        h_offset += x_move;
+                        v_offset += y_move;
+                        recyclerView.smoothScrollBy((int) x_move, (int) y_move);
+                        data_last[2] = data_current[2];
+                        data_last[1] = data_current[1];
+//                        Log.d(TAG, "smoothScrollBy current angle: " + data_current[2] + "," + data_current[1]);
+//                        Log.d(TAG, "smoothScrollBy last angle: " + data_last[2] + "," + data_last[1]);
+//                        Log.d(TAG, "smoothScrollBy current offset: " + x_move + "," + y_move);
+//                        Log.d(TAG, "smoothScrollBy all offset: " + h_offset + "," + v_offset);
                     }
                 }
             }
@@ -133,9 +143,9 @@ public class MainActivity extends Activity {
         intentFilter.addAction("android.intent.action.PACKAGE_REPLACED");
         intentFilter.addDataScheme("package");
         registerReceiver(new AppReceiver(), intentFilter);
-        this.homeKeyEventReceiver = new HomeKeyEventReceiver();
-        registerReceiver(this.homeKeyEventReceiver, new IntentFilter("android.intent.action.CLOSE_SYSTEM_DIALOGS"));
-        this.homeKeyEventReceiver.setIshome(true);
+//        this.homeKeyEventReceiver = new HomeKeyEventReceiver();
+//        registerReceiver(this.homeKeyEventReceiver, new IntentFilter("android.intent.action.CLOSE_SYSTEM_DIALOGS"));
+//        this.homeKeyEventReceiver.setIshome(true);
     }
 
     private void init() {
@@ -221,12 +231,12 @@ public class MainActivity extends Activity {
                 View view = recyclerView;
 
                 if (e1.getX() - e2.getX() > 130 && Math.abs(e1.getX() - e2.getX()) / Math.abs(e1.getY() - e2.getY()) > 2) {
-                    Log.i(TAG, "向左滑动");
+                    Log.i(TAG, "向后滑动");
                     scaledScrollFactor = -1.0f; // 缩小
 
                 }
                 if (e2.getX() - e1.getX() > 130 && Math.abs(e1.getX() - e2.getX()) / Math.abs(e1.getY() - e2.getY()) > 2) {
-                    Log.i(TAG, "向右滑动");
+                    Log.i(TAG, "向前滑动");
                     scaledScrollFactor = 1.0f; // 放大
                 }
 
@@ -236,29 +246,32 @@ public class MainActivity extends Activity {
                         focused = 2;
                     }
                     if (focused == 2) {
-                        if (i > 0 && scale < 20) {
-                            scale++;
+                        if (i > 0 && scale < MAX_SCALE) {
+                            scale+=4;
                             time = 0L;
-                        } else if (scaledScrollFactor < 0.0f && scale > -20) {
-                            scale--;
+                        } else if (scaledScrollFactor < 0.0f && scale > MIN_SCALE) {
+                            scale-=2;
                         }
                         ViewCompat.animate(view).setDuration(50L).scaleX((scale * 0.03f) + 1.0f).scaleY((scale * 0.03f) + 1.0f).start();
+                        // 缩放倍数控制
                         int i2 = scale;
-                        if (i2 == -20) {
-                            focused = 1;
+                        if (i2 <= MIN_SCALE) {
+                            focused = 1;  // 缩小最小值
                         } else if (i2 == 0) {
-                            focused = 0;
-                        } else if (i2 == 20) {
-                            focused = 3;
+                            focused = 0;  // 缩放过程
+                        } else if (i2 >= MAX_SCALE) {
+                            focused = 3;  // 放大最大值，打开app
                         }
+
                         int i3 = focused;
                         if (i3 == 0) {
+                            // 执行缩放过程
                             ViewCompat.animate(view).setDuration(200L).scaleX(1.0f).scaleY(1.0f).start();
                             isOpened = false;
                         } else if (i3 != 1) {
                             if (i3 == 3 && !isOpened && recyclerView.getScaleX() >= 1.55f) {
                                 isOpened = true;
-                                ViewCompat.animate(view).setDuration(100L).scaleX(1.0f).scaleY(1.0f).start();
+                                ViewCompat.animate(view).setDuration(50L).scaleX(1.0f).scaleY(1.0f).start();
                                 scale = 0;
                                 Intent intent = new Intent();
                                 intent.setClassName(apps.get(bLayoutManager.getPos()).name.toString(), apps.get(bLayoutManager.pos).label.toString());

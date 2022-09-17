@@ -157,29 +157,55 @@ public class BubbleLayoutManager extends RecyclerView.LayoutManager {
         return i;
     }
 
+//    @Override // androidx.recyclerview.widget.RecyclerView.LayoutManager
+//    public int scrollHorizontallyBy(int i, RecyclerView.Recycler recycler, RecyclerView.State state) {
+//        int i2;
+//        int i3;
+//        if (this.horizontalScrollOffset + i < (this.centerX - ((this.bHexagon.floor + 1) * this.bHexagon.triangleH)) - ((this.viewWidth * 3) / 2)) {
+//            i2 = ((-this.horizontalScrollOffset) + this.centerX) - ((this.bHexagon.floor + 1) * this.bHexagon.triangleH);
+//            i3 = (this.viewWidth * 3) / 2;
+//        } else {
+//            if (this.horizontalScrollOffset + i > (-this.centerX) + ((this.bHexagon.floor + 1) * this.bHexagon.triangleH) + ((this.viewWidth * 3) / 2)) {
+//                i2 = (-this.centerX) + ((this.bHexagon.floor + 1) * this.TriangleH) + ((this.viewWidth * 3) / 2);
+//                i3 = this.horizontalScrollOffset;
+//            }
+//            this.horizontalScrollOffset += i;
+//            offsetChildrenHorizontal(-i);
+//            detachAndScrapAttachedViews(recycler);
+//            putItems(recycler);
+//            return i;
+//        }
+//        i = i2 - i3;
+//        this.horizontalScrollOffset += i;
+//        offsetChildrenHorizontal(-i);
+//        detachAndScrapAttachedViews(recycler);
+//        putItems(recycler);
+//        return i;
+//    }
+
     @Override // androidx.recyclerview.widget.RecyclerView.LayoutManager
     public int scrollHorizontallyBy(int i, RecyclerView.Recycler recycler, RecyclerView.State state) {
         int i2;
         int i3;
         if (this.horizontalScrollOffset + i < (this.centerX - ((this.bHexagon.floor + 1) * this.bHexagon.triangleH)) - ((this.viewWidth * 3) / 2)) {
-            i2 = ((-this.horizontalScrollOffset) + this.centerX) - ((this.bHexagon.floor + 1) * this.bHexagon.triangleH);
-            i3 = (this.viewWidth * 3) / 2;
+//            i2 = ((-this.horizontalScrollOffset) + this.centerX) - ((this.bHexagon.floor + 1) * this.bHexagon.triangleH);
+//            i3 = (this.viewWidth * 3) / 2;
+//            i = i2 - i3;
+            this.horizontalScrollOffset += i;
+            offsetChildrenHorizontal(-i);
+            detachAndScrapAttachedViews(recycler);
+            putItems(recycler);
+            return i;
         } else {
-            if (this.horizontalScrollOffset + i > (-this.centerX) + ((this.bHexagon.floor + 1) * this.bHexagon.triangleH) + ((this.viewWidth * 3) / 2)) {
-                i2 = (-this.centerX) + ((this.bHexagon.floor + 1) * this.TriangleH) + ((this.viewWidth * 3) / 2);
-                i3 = this.horizontalScrollOffset;
-            }
+//            if (this.horizontalScrollOffset + i > (-this.centerX) + ((this.bHexagon.floor + 1) * this.bHexagon.triangleH) + ((this.viewWidth * 3) / 2)) {
+//                i2 = (-this.centerX) + ((this.bHexagon.floor + 1) * this.TriangleH) + ((this.viewWidth * 3) / 2);
+//                i3 = this.horizontalScrollOffset;
+//            }
             this.horizontalScrollOffset += i;
             offsetChildrenHorizontal(-i);
             detachAndScrapAttachedViews(recycler);
             putItems(recycler);
             return i;
         }
-        i = i2 - i3;
-        this.horizontalScrollOffset += i;
-        offsetChildrenHorizontal(-i);
-        detachAndScrapAttachedViews(recycler);
-        putItems(recycler);
-        return i;
     }
 }
