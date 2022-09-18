@@ -69,9 +69,6 @@ public class MainActivity extends Activity {
     private final float[] data_last = {0, 0, 0};
     private final float[] data_current = {0, 0, 0};  // 记录偏移值xyz
 
-    private int h_offset = 0;
-    private int v_offset = 0;
-
     private boolean onetime = true;
 
     // Inmo Ring
@@ -107,22 +104,33 @@ public class MainActivity extends Activity {
             public void onSensorChanged(SensorEvent event) {
                 data_current[2] = event.values[2];  // x
                 data_current[1] = event.values[1];  // y
+                data_current[0] = event.values[0];  // z
 
-                if (Math.abs(data_current[2]) < 30 && Math.abs(data_current[1]) < 30) {
-                    if (gSensorCheck(Math.abs(data_current[2] - data_last[2])) || gSensorCheck(Math.abs(data_current[1] - data_last[1]))) {
-                        float x_move = (data_current[2] - data_last[2]) * 10;
-                        float y_move = (data_current[1] - data_last[1]) * 10;
-                        h_offset += x_move;
-                        v_offset += y_move;
-                        recyclerView.smoothScrollBy((int) x_move, (int) y_move);
-                        data_last[2] = data_current[2];
-                        data_last[1] = data_current[1];
-//                        Log.d(TAG, "smoothScrollBy current angle: " + data_current[2] + "," + data_current[1]);
-//                        Log.d(TAG, "smoothScrollBy last angle: " + data_last[2] + "," + data_last[1]);
-//                        Log.d(TAG, "smoothScrollBy current offset: " + x_move + "," + y_move);
-//                        Log.d(TAG, "smoothScrollBy all offset: " + h_offset + "," + v_offset);
+                int x_move = Math.round((data_current[2] - data_last[2]) * 10);  // todo 处理歪着头的角度
+                int y_move = Math.round((data_current[1] - data_last[1]) * 50);  // todo 倍数根据缩放调整
+                int z_move = Math.round((data_current[0] - data_last[0]) * 20);
+
+                if (Math.abs(data_current[1]) < 15 ) {  // 纵向移动角度小于15度
+                    boolean v_offset = Math.abs(y_move) > 80 && Math.abs(y_move) < 750;  // 误差飘移值1.5度
+                    boolean h_offset = Math.abs(z_move) > 10 && Math.abs(z_move) <300;   // 误差飘移值0.5度
+                    if (v_offset && h_offset) {
+                        recyclerView.smoothScrollBy(z_move, y_move);
+                        // Log.d(TAG, "smoothScrollBy current offset: " + x_move + "," + y_move + "," + z_move);
+                    } else if (v_offset) {
+                        recyclerView.smoothScrollBy(0, y_move);
+                        // Log.d(TAG, "smoothScrollBy current offset: " + 0 + "," + y_move + "," + z_move);
+                    } else if (h_offset) {
+                        recyclerView.smoothScrollBy(z_move, 0);
+                        // Log.d(TAG, "smoothScrollBy current offset: " + x_move + "," + 0 + "," + z_move);
                     }
+                    // Log.d(TAG, "smoothScrollBy current angle: " + data_current[2] + "," + data_current[1] + "," + data_current[0]);
+                    // Log.d(TAG, "smoothScrollBy last angle: " + data_last[2] + "," + data_last[1]);
+                    // Log.d(TAG, "smoothScrollBy all offset: " + h_offset + "," + v_offset);
                 }
+
+                data_last[2] = data_current[2];
+                data_last[1] = data_current[1];
+                data_last[0] = data_current[0];
             }
         };
     }
