@@ -15,6 +15,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AnimationUtils;
@@ -41,7 +42,6 @@ public class MainActivity extends Activity {
     BubbleRecyclerViewAdapter appListAdapter;
     List<AppDetail> apps;
     SharedPreferences.Editor editor;
-//    HomeKeyEventReceiver homeKeyEventReceiver;
     boolean isOpened;
     DrawerLayout layout;
     private PackageManager manager;
@@ -73,6 +73,12 @@ public class MainActivity extends Activity {
     private int v_offset = 0;
 
     private boolean onetime = true;
+
+    // Inmo Ring
+    private static final int KEY_SHORTCLICK1 = 290;
+    private static final int KEY_SHORTCLICK2 = 291;
+    private static final int KEY_LONGPRESS1 = 292;
+    private static final int KEY_LONGPRESS2 = 293;
 
     @Override
     public void onCreate(Bundle bundle) {
@@ -143,9 +149,6 @@ public class MainActivity extends Activity {
         intentFilter.addAction("android.intent.action.PACKAGE_REPLACED");
         intentFilter.addDataScheme("package");
         registerReceiver(new AppReceiver(), intentFilter);
-//        this.homeKeyEventReceiver = new HomeKeyEventReceiver();
-//        registerReceiver(this.homeKeyEventReceiver, new IntentFilter("android.intent.action.CLOSE_SYSTEM_DIALOGS"));
-//        this.homeKeyEventReceiver.setIshome(true);
     }
 
     private void init() {
@@ -189,6 +192,77 @@ public class MainActivity extends Activity {
         return ins;
     }
 
+    private void scroll_recycleview(float scaledScrollFactor) {
+        View view = recyclerView;
+
+        int i = (scaledScrollFactor > 0.0f ? 1 : (scaledScrollFactor == 0.0f ? 0 : -1));  // 单次缩放大小
+        if (i != 0) {
+            focused = 2;
+        }
+        if (focused == 2) {
+            if (i > 0 && scale < MAX_SCALE) {
+                scale+=scaledScrollFactor;
+                time = 0L;
+            } else if (scaledScrollFactor < 0.0f && scale > MIN_SCALE) {
+                scale+=scaledScrollFactor;
+            }
+            ViewCompat.animate(view).setDuration(50L).scaleX((scale * 0.03f) + 1.0f).scaleY((scale * 0.03f) + 1.0f).start();
+            // 缩放倍数控制
+            int i2 = scale;
+            if (i2 <= MIN_SCALE) {
+                focused = 1;  // 缩小最小值
+            } else if (i2 == 0) {
+                focused = 0;  // 缩放过程
+            } else if (i2 >= MAX_SCALE) {
+                focused = 3;  // 放大最大值，打开app
+            }
+
+            int i3 = focused;
+            if (i3 == 0) {
+                // 执行缩放过程
+                ViewCompat.animate(view).setDuration(200L).scaleX(scaledScrollFactor).scaleY(scaledScrollFactor).start();
+                isOpened = false;
+            } else if (i3 != 1) {
+                if (i3 == 3 && !isOpened && recyclerView.getScaleX() >= 1.55f) {
+                    isOpened = true;
+                    ViewCompat.animate(view).setDuration(50L).scaleX(scaledScrollFactor).scaleY(scaledScrollFactor).start();
+                    scale = 0;
+                    Intent intent = new Intent();
+                    intent.setClassName(apps.get(bLayoutManager.getPos()).name.toString(), apps.get(bLayoutManager.pos).label.toString());
+                    startActivity(intent);
+                    focused = 0;
+                    isOpened = false;
+                }
+            } else if (scaledScrollFactor < 0.0f) {
+                if (time == 0) {
+                    time = System.currentTimeMillis();
+                } else if (time <= System.currentTimeMillis() - 1000) {
+                    ViewCompat.animate(view).setDuration(500L).scaleX(scaledScrollFactor).scaleY(scaledScrollFactor).start();
+                    bLayoutManager.isScale = true;
+                    bLayoutManager.scale = scale;
+                    recyclerView.smoothScrollBy(0, 1);
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            scale = 0;
+                            time = 0L;
+                            bLayoutManager.isScale = true;
+                            bLayoutManager.scale = scale;
+                            recyclerView.smoothScrollBy(0, 1);
+                        }
+                    }, 500L);
+                } else {
+                    time = System.currentTimeMillis();
+                }
+            } else {
+                time = 0L;
+            }
+        }
+        bLayoutManager.isScale = true;
+        bLayoutManager.scale = scale;
+        recyclerView.smoothScrollBy(0, 1);
+    }
+
     private void initGesture() {
         mDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
 
@@ -225,89 +299,24 @@ public class MainActivity extends Activity {
                 return super.onDoubleTap(e);
             }
 
+
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
                 float scaledScrollFactor = 0.0f; // 缩放参数
-                View view = recyclerView;
+
 
                 if (e1.getX() - e2.getX() > 130 && Math.abs(e1.getX() - e2.getX()) / Math.abs(e1.getY() - e2.getY()) > 2) {
                     Log.i(TAG, "向后滑动");
-                    scaledScrollFactor = -1.0f; // 缩小
+                    scaledScrollFactor = -2.0f; // 缩小
 
                 }
                 if (e2.getX() - e1.getX() > 130 && Math.abs(e1.getX() - e2.getX()) / Math.abs(e1.getY() - e2.getY()) > 2) {
                     Log.i(TAG, "向前滑动");
-                    scaledScrollFactor = 1.0f; // 放大
+                    scaledScrollFactor = 4.0f; // 放大
                 }
 
                 if (scaledScrollFactor != 0.0f) {
-                    int i = (scaledScrollFactor > 0.0f ? 1 : (scaledScrollFactor == 0.0f ? 0 : -1));
-                    if (i != 0) {
-                        focused = 2;
-                    }
-                    if (focused == 2) {
-                        if (i > 0 && scale < MAX_SCALE) {
-                            scale+=4;
-                            time = 0L;
-                        } else if (scaledScrollFactor < 0.0f && scale > MIN_SCALE) {
-                            scale-=2;
-                        }
-                        ViewCompat.animate(view).setDuration(50L).scaleX((scale * 0.03f) + 1.0f).scaleY((scale * 0.03f) + 1.0f).start();
-                        // 缩放倍数控制
-                        int i2 = scale;
-                        if (i2 <= MIN_SCALE) {
-                            focused = 1;  // 缩小最小值
-                        } else if (i2 == 0) {
-                            focused = 0;  // 缩放过程
-                        } else if (i2 >= MAX_SCALE) {
-                            focused = 3;  // 放大最大值，打开app
-                        }
-
-                        int i3 = focused;
-                        if (i3 == 0) {
-                            // 执行缩放过程
-                            ViewCompat.animate(view).setDuration(200L).scaleX(1.0f).scaleY(1.0f).start();
-                            isOpened = false;
-                        } else if (i3 != 1) {
-                            if (i3 == 3 && !isOpened && recyclerView.getScaleX() >= 1.55f) {
-                                isOpened = true;
-                                ViewCompat.animate(view).setDuration(50L).scaleX(1.0f).scaleY(1.0f).start();
-                                scale = 0;
-                                Intent intent = new Intent();
-                                intent.setClassName(apps.get(bLayoutManager.getPos()).name.toString(), apps.get(bLayoutManager.pos).label.toString());
-                                startActivity(intent);
-                                focused = 0;
-                                isOpened = false;
-                            }
-                        } else if (scaledScrollFactor < 0.0f) {
-                            if (time == 0) {
-                                time = System.currentTimeMillis();
-                            } else if (time <= System.currentTimeMillis() - 1000) {
-                                ViewCompat.animate(view).setDuration(500L).scaleX(1.0f).scaleY(1.0f).start();
-                                bLayoutManager.isScale = true;
-                                bLayoutManager.scale = scale;
-                                recyclerView.smoothScrollBy(0, 1);
-                                timer.schedule(new TimerTask() {
-                                    @Override
-                                    public void run() {
-                                        scale = 0;
-                                        time = 0L;
-                                        bLayoutManager.isScale = true;
-                                        bLayoutManager.scale = scale;
-                                        recyclerView.smoothScrollBy(0, 1);
-                                    }
-                                }, 500L);
-                            } else {
-                                time = System.currentTimeMillis();
-                            }
-                        } else {
-                            time = 0L;
-                        }
-                    }
-                    bLayoutManager.isScale = true;
-                    bLayoutManager.scale = scale;
-                    recyclerView.smoothScrollBy(0, 1);
-
+                    scroll_recycleview(scaledScrollFactor);
                     return true;
                 }
 
@@ -320,5 +329,23 @@ public class MainActivity extends Activity {
     public boolean dispatchTouchEvent(@NotNull MotionEvent ev) {
         mDetector.onTouchEvent(ev);
         return true;
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch(keyCode) {
+            case KEY_SHORTCLICK1:
+                Log.d(TAG, "morse: " + "KEY_SHORTCLICK1");
+                scroll_recycleview(40.0f);
+                break;
+            case KEY_SHORTCLICK2:
+                Log.d(TAG, "morse: " + "KEY_SHORTCLICK2");
+                scroll_recycleview(-20.0f);
+                break;
+            case KEY_LONGPRESS1:
+                Log.d(TAG, "morse: " + "KEY_LONGPRESS1");
+                break;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 }
